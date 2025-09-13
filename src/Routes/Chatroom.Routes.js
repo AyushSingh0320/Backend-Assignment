@@ -6,6 +6,6 @@ const router = Router();
 
 // Create Chatroom route 
 
-router.route('/').post(Auth , createchatroom);
+router.route("/create").post(Auth , createchatroom);
 
 export default router;

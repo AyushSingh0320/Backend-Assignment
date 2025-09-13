@@ -3,6 +3,7 @@ import dotenv from "dotenv"
 import cors from "cors"
 import mongoose from "mongoose"
 import Authroutes from "./Routes/Auth.Routes.js"
+import Chatroomroutes from "./Routes/Chatroom.Routes.js"
 import redisClient from "./Caching/redisclient.js"
 
 // Connect to Redis
@@ -38,7 +39,8 @@ app.get("/" , (req , res) => {
 
 // handle Routes
 app.use('/api/auth' , Authroutes)
-
+app.use('/api/chatroom' , Chatroomroutes)
+console.log("All routes registered successfully");
 
 
 
