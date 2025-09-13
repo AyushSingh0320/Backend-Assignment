@@ -3,7 +3,7 @@ import dotenv from "dotenv"
 import cors from "cors"
 import mongoose from "mongoose"
 import Authroutes from "./Routes/Auth.Routes.js"
-import redisClient from "./Caching/client.js"
+import redisClient from "./Caching/redisclient.js"
 
 // Connect to Redis
 async function connectToRedis() {
