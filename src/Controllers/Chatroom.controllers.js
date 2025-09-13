@@ -1,5 +1,7 @@
 import Chatroom from "../collections/Chatroom.model.js";
 import Message from "../collections/Message.model.js";
+import { geminiQueue , geminiWorker } from "../queue.js";
+import client from "../Caching/redisclient.js";
 
 // Create chatroom controller
 
@@ -17,7 +19,7 @@ const createchatroom = async (req , res) => {
 
         const newchatroom = new Chatroom({
             user : user._id,
-            name : name.trim()
+            name : name.trim(),
         })
 
         await newchatroom.save();
@@ -39,22 +41,50 @@ const createchatroom = async (req , res) => {
     }
 }
 
-export const createchatroom1 = async (req, res) => {
+// get all chatrooms controller
+
+const getchatrooms = async (req, res) => {
     try {
-        console.log("Chatroom creation endpoint hit!");
-        console.log("Request body:", req.body);
+        const user = req.user;
+        const cacheKey = `user:${user._id}:chatrooms`;
+        
+        // Try to get from cache first
+        try {
+            const cachedChatrooms = await client.get(cacheKey);
+            if (cachedChatrooms) {
+                return res.status(200).json({
+                    chatrooms: JSON.parse(cachedChatrooms),
+                    message: "Chatrooms fetched from cache"
+                });
+            }
+        } catch (cacheError) {
+            console.log("Cache error, fetching from DB:", cacheError.message);
+        }
+        
+        // Fetch from database
+        const chatrooms = await Chatroom.find({ user: user._id })
+            .sort({ lastActivity: -1 })
+            .select('-__v');
+        
+        // Cache for 5 minutes
+        try {
+            await client.setEx(cacheKey, 300, JSON.stringify(chatrooms));
+        } catch (cacheError) {
+            console.log("Error caching chatrooms:", cacheError.message);
+        }
         
         res.status(200).json({
-            message: "Chatroom endpoint is working!",
-            body: req.body
+            chatrooms,
+            message: "Chatrooms fetched successfully"
         });
+        
     } catch (error) {
-        console.error("Error:", error);
+        console.error("Error fetching chatrooms:", error);
         res.status(500).json({ message: "Internal Server Error" });
     }
 };
 
-
 export {
     createchatroom,
+    getchatrooms
 }
