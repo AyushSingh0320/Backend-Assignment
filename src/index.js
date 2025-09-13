@@ -3,7 +3,19 @@ import dotenv from "dotenv"
 import cors from "cors"
 import mongoose from "mongoose"
 import Authroutes from "./Routes/Auth.Routes.js"
+import redisClient from "./Caching/client.js"
 
+// Connect to Redis
+async function connectToRedis() {
+    try {
+        await redisClient.connect();
+        console.log("Connected to Redis");
+    } catch (error) {
+        console.error("Error connecting to Redis:", error);
+    }
+}
+
+connectToRedis();
 
 const app = express()
 dotenv.config({path : "./.env"})
