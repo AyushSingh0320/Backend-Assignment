@@ -75,7 +75,7 @@ const getchatrooms = async (req, res) => {
         
         res.status(200).json({
             chatrooms,
-            message: "Chatrooms fetched successfully"
+            message: "Chatrooms fetched successfully from DB"
         });
         
     } catch (error) {
@@ -83,8 +83,35 @@ const getchatrooms = async (req, res) => {
         res.status(500).json({ message: "Internal Server Error" });
     }
 };
-
+// Get all data of chatroom
+const getchatroomdata = async (req , res) => {
+    try {
+        const { chatroomID } = req.params
+    if(!chatroomID){
+        return res.status(400).json({message : "chatroomID is required"})
+    }
+    const chatroom = await Chatroom.findById(chatroomID);
+    if(!chatroom){
+        return res.status(404).json({message : "Chatroom not found"})
+    }
+     const messages  = await Message.find({chatroom : chatroomID}).sort({createdAt : -1})
+    if(!messages || messages.length === 0){
+        return res.status(404).json({message : "No messages found in this chatroom"})
+    }
+    return res.status(200).json({
+        chatroom : {
+            _id : chatroom._id,
+            name : chatroom.name
+        },
+        messages
+    })
+} catch (error) {
+    console.error("Error in getchatroomdata controller" , error)
+    return res.status(500).json({message : "Internal Server Error"})
+    }
+}
 export {
     createchatroom,
-    getchatrooms
+    getchatrooms,
+    getchatroomdata
 }
