@@ -1,10 +1,9 @@
 import Chatroom from "../collections/Chatroom.model.js";
 import Message from "../collections/Message.model.js";
-import { geminiQueue , geminiWorker } from "../queue.js";
+import { geminiQueue , queueEvents } from "../queue.js";
 import client from "../Caching/redisclient.js";
 
 // Create chatroom controller
-
 const createchatroom = async (req , res) => {
     try {
         const user = req.user;
@@ -42,7 +41,6 @@ const createchatroom = async (req , res) => {
 }
 
 // get all chatrooms controller
-
 const getchatrooms = async (req, res) => {
     try {
         const user = req.user;
@@ -64,7 +62,7 @@ const getchatrooms = async (req, res) => {
         // Fetch from database
         const chatrooms = await Chatroom.find({ user: user._id })
             .sort({ lastActivity: -1 })
-            .select('-__v');
+            .select('-__v -messagecount');
         
         // Cache for 5 minutes
         try {
@@ -83,10 +81,12 @@ const getchatrooms = async (req, res) => {
         res.status(500).json({ message: "Internal Server Error" });
     }
 };
-// Get all data of chatroom
+
+// Get all data of specific chatroom 
 const getchatroomdata = async (req , res) => {
     try {
-        const { chatroomID } = req.params
+        // console.log("query params:", req.params);
+        const  chatroomID  = req.params.Id
     if(!chatroomID){
         return res.status(400).json({message : "chatroomID is required"})
     }
@@ -96,12 +96,13 @@ const getchatroomdata = async (req , res) => {
     }
      const messages  = await Message.find({chatroom : chatroomID}).sort({createdAt : -1})
     if(!messages || messages.length === 0){
-        return res.status(404).json({message : "No messages found in this chatroom"})
+        return res.status(200).json([])
     }
     return res.status(200).json({
         chatroom : {
             _id : chatroom._id,
-            name : chatroom.name
+            name : chatroom.name,
+            messagecount : messages.length
         },
         messages
     })
@@ -110,8 +111,85 @@ const getchatroomdata = async (req , res) => {
     return res.status(500).json({message : "Internal Server Error"})
     }
 }
+
+// post message controller
+
+const postmessage = async (req , res) => {
+try {
+    console.log("params:", req.params);
+    const chatroomID = req.params.id;
+    const user = req.user;
+    const {content} = req.body;
+    console.log("chatroomID:", chatroomID);
+
+    if (!content || content.trim() === "") {
+    return res.status(400).json({ message: "Message content is required" });
+    }
+
+    const newusermessage = new Message({
+        chatroom : chatroomID,
+        user : user._id,
+        role : "user",
+        content : content.trim()
+    })
+    await newusermessage.save();
+    
+    if(!newusermessage){
+        return res.status(500).json({message : "Message not sent"})
+    }
+    const Allmessage = await Message.find({chatroom : chatroomID}).sort({createdAt : -1});
+
+    await Chatroom.findByIdAndUpdate(chatroomID , {
+        lastActivity : Date.now(),
+        messagecount : Allmessage.length + 1
+    })
+    const chatroom = await Chatroom.findById(chatroomID);
+       if(!chatroom){
+        return res.status(404).json({message : "Chattroom not found"})
+    }
+     // Checking Queue is ready or not 
+     if(!geminiQueue){
+       throw new Error("Gemini queue is not initialized");
+        }
+     
+
+
+    // Add job to geminiQueue
+   const job = await geminiQueue.add("processMessage", {
+       chatroomID: chatroomID,
+       content: content.trim()
+   },
+   {
+            attempts: 3,
+            backoff: {
+                type: 'exponential',
+                delay: 2000,
+            }
+        }
+);
+console.log(`Added job ${job.id} to Gemini queue, waiting for completion...`);
+// Wait for the job to complete (up to 30 seconds)
+const result = await job.waitUntilFinished(queueEvents, 30000);
+
+   return res.status(200).json({
+    chatroom,
+    newusermessage,
+    Geminiresponse: result,
+    message : "Message sent successfully"
+   })
+
+
+
+
+} catch (error) {
+     console.error("Error in postmessage controller", error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+}
+
 export {
     createchatroom,
     getchatrooms,
-    getchatroomdata
+    getchatroomdata,
+    postmessage
 }
