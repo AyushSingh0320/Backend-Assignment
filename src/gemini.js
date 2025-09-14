@@ -7,15 +7,12 @@ dotenv.config({ path: "../.env" });
 
 async function getAIresponse(prompt) {
 
-const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
+const model = ai.getGenerativeModel({ model: "gemini-2.5-flash" });
 const result = await model.generateContent(prompt);
 const response = await result.response;
 const text = response.text();
 console.log("Ai response" , text);
 return text;
 } 
-
-
-
 
  export default getAIresponse;

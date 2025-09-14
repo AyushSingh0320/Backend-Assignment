@@ -20,6 +20,9 @@ const geminiQueue = new Queue("geminiQueue" , {
     const queueEvents = new QueueEvents("geminiQueue", {
     connection: redisConnection
 });
+console.log("queueEvents" , queueEvents)
+
+
 
 const geminiWorker = new Worker("geminiQueue" , async (job) => {
       const {chatroomID, content} = job.data;
@@ -40,11 +43,11 @@ const geminiWorker = new Worker("geminiQueue" , async (job) => {
        await Aimessage.save();
 
         // Update chatroom message count
-        const messageCount = await Message.countDocuments({ chatroom: chatroomID });
-        await Chatroom.findByIdAndUpdate(chatroomID, {
-            lastActivity: new Date(),
-            messageCount: messageCount
-        });
+        // const messageCount = await Message.countDocuments({ chatroom: chatroomID });
+        // await Chatroom.findByIdAndUpdate(chatroomID, {
+        //     lastActivity: new Date(),
+        //     messageCount: messageCount
+        // });
 
     return  {
        airespnse:Airesponse.trim()
@@ -68,6 +71,8 @@ const geminiWorker = new Worker("geminiQueue" , async (job) => {
     connection: redisConnection,
     concurrency: 10, // Process up to 10 jobs concurrently
 });
+
+// Event listeners for logging
 
 geminiWorker.on('completed', (job, result) => {
     console.log(`✅ Job ${job.id} completed:`, result.airespnse?.substring(0, 100) + "...");
