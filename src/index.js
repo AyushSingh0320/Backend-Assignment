@@ -5,6 +5,7 @@ import mongoose from "mongoose"
 import Authroutes from "./Routes/Auth.Routes.js"
 import Chatroomroutes from "./Routes/Chatroom.Routes.js"
 import Subscriptionroutes from "./Routes/Subscription.Routes.js"
+import Webhookroutes from "./Routes/Webhook.Routes.js"
 import redisClient from "./Caching/redisclient.js"
 
 // Connect to Redis
@@ -27,6 +28,10 @@ app.use(cors({
     origin: "*",
     methods: ["GET" , "POST" , "PUT" , "DELETE"]
 }))
+// Webhook routes need the raw body to validate the signature
+app.use('/webhook',  Webhookroutes);
+
+
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
@@ -42,6 +47,7 @@ app.get("/" , (req , res) => {
 app.use('/api/auth' , Authroutes)
 app.use('/api/chatroom' , Chatroomroutes) 
 app.use('/api/subscription' , Subscriptionroutes)
+
 
 console.log("All routes registered successfully");
 

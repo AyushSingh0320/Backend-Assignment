@@ -26,7 +26,8 @@ const signup = async (req , res) => {
             {
                 name : name,
                 phoneNo : phoneNo,
-                password : password 
+                password : password ,
+                currentmodel : "Basic"
             }
          )
           await newuser.save();
@@ -38,7 +39,8 @@ const signup = async (req , res) => {
             newuser : {
                 id : newuser._id,
                 name : newuser.name,
-                phoneNo : newuser.phoneNo
+                phoneNo : newuser.phoneNo,
+                currentmodel : newuser.currentmodel,
             },
             message : "User registered successfully"
         })
@@ -50,7 +52,6 @@ const signup = async (req , res) => {
 };
 
 // Send OTP controller
-
 const sendotp = async (req , res) => {
     try {
         const {phoneNo} = req.body;
@@ -70,8 +71,8 @@ const sendotp = async (req , res) => {
         return res.status(500).json({message : "Internal Server Error"})
     }
 };
-// Verify OTP controller
 
+// Verify OTP controller
 const verifyotp = async (req , res) => {
     try {
         const {phoneNo , otp} = req.body;
@@ -118,8 +119,8 @@ const verifyotp = async (req , res) => {
         return res.status(500).json({message : "Internal Server Error"})
     }
 }; 
-// Forgot Password controller
 
+// Forgot Password controller
 const forgotpassword = async (req , res) => {
     try {
         const {phoneNo} = req.body;
@@ -176,14 +177,14 @@ const changepassword = async (req , res) => {
 }
 
 // User details controller
-
 const userdetails = async (req , res) => {
     try {
         const user = req.user;
         return res.status(200).json({user : {
             id : user._id,
             name : user.name,
-            phoneNo : user.phoneNo
+            phoneNo : user.phoneNo,
+            currentmodel : user.currentmodel,
         }})
     } catch (error) {
         console.error("Error in userdetails controller", error)
@@ -191,6 +192,7 @@ const userdetails = async (req , res) => {
     }
 }
 
+// Export all controllers
 export {
     signup ,
     sendotp,

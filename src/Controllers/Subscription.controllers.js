@@ -20,6 +20,10 @@ const createCheckoutSession = async (req ,res) => {
                     quantity : 1
                 }
             ],
+            metadata: {
+            userId: req.user.id,  // ✅ your DB user ID
+         },
+
             success_url : "http://localhost:3000/success",
             cancel_url : "http://localhost:3000/cancel"
         });
@@ -35,9 +39,37 @@ const createCheckoutSession = async (req ,res) => {
     }
 }
 
+//  get subscription status
+
+const subscriptionstatus = async (req , res) => {
+    try {
+        const userid = req.user.id;
+
+        if(!userid){
+            return res.status(400).json({message : "User ID is required"})
+        }   
+
+        const user = await User.findById(userid);
+        if(!user){
+            return res.status(404).json({message : "User not found"})
+        }
+        return res.status(200).json({
+            user : {
+                currentmodel : user.currentmodel,
+            }
+        })
+
+        
+    } catch (error) {
+        console.error("Error in subscriptionstatus controller" , error)
+        return res.status(500).json({message : "Internal Server Error"})
+    }
+}
+
 
 
 
 export {
-    createCheckoutSession
-}   
+    createCheckoutSession,
+    subscriptionstatus
+}    

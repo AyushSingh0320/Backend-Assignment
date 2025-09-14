@@ -21,6 +21,11 @@ const userschema = new mongoose.Schema({
         required : true,
         unique : true,
         trim : true,
+    },
+    currentmodel : {
+        type : String,
+        enum : ["Basic" , "Pro"],
+        default : "Baic"
     }
 },
 {
