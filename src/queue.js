@@ -9,7 +9,21 @@ dotenv.config({path : "./.env"})
 const redisConnection = {
     host: process.env.REDIS_HOST || 'localhost',
     port: parseInt(process.env.REDIS_PORT) || 6379,
+    connectTimeout: 10000,
+    retryDelayOnFailover: 100,
+    enableReadyCheck: false,
+    maxRetriesPerRequest: null,
 };
+// for production
+
+if (process.env.REDIS_URL) {
+    const redisUrl = new URL(process.env.REDIS_URL);
+    redisConnection.host = redisUrl.hostname;
+    redisConnection.port = parseInt(redisUrl.port);
+    if (redisUrl.password) {
+        redisConnection.password = redisUrl.password;
+    }
+}
 
 
 const geminiQueue = new Queue("geminiQueue" , {

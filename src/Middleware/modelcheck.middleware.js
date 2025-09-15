@@ -28,6 +28,7 @@ const modelcheck = async (req , res , next) => {
 
         const messagecount = await message.countDocuments({
             user : userId,
+            role : "user",
             createdAt : {$gte : twentyfourhourago}
         })
 

@@ -1,5 +1,6 @@
 import express from "express"
 import dotenv from "dotenv"
+dotenv.config({path : "./.env"})
 import cors from "cors"
 import mongoose from "mongoose"
 import Authroutes from "./Routes/Auth.Routes.js"
@@ -7,6 +8,7 @@ import Chatroomroutes from "./Routes/Chatroom.Routes.js"
 import Subscriptionroutes from "./Routes/Subscription.Routes.js"
 import Webhookroutes from "./Routes/Webhook.Routes.js"
 import redisClient from "./Caching/redisclient.js"
+
 
 // Connect to Redis
 async function connectToRedis() {
@@ -21,13 +23,23 @@ async function connectToRedis() {
 connectToRedis();
 
 const app = express()
-dotenv.config({path : "./.env"})
+
 
 
 app.use(cors({
     origin: "*",
     methods: ["GET" , "POST" , "PUT" , "DELETE"]
 }))
+
+// Health check endpoint (important for Render)
+app.get("/health", (req, res) => {
+    res.status(200).json({ 
+        status: "OK", 
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV 
+    });
+});
+
 // Webhook routes need the raw body to validate the signature
 app.use('/webhook',  Webhookroutes);
 
@@ -39,8 +51,12 @@ const PORT = process.env.PORT || 3000
 
 // Root route
 app.get("/" , (req , res) => {
-    res.status(200).send("API is running...")   
-})
+    res.status(200).json({
+       message: "Gemini AI Chatbot API", 
+        version: "1.0.0",
+        status: "running"
+    })   
+});
 
 
 // handle Routes
