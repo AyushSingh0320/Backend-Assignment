@@ -76,7 +76,6 @@ const geminiWorker = new Worker("geminiQueue" , async (job) => {
 
 geminiWorker.on('completed', (job, result) => {
     console.log(`✅ Job ${job.id} completed:`, result.airespnse?.substring(0, 100) + "...");
-    console.log("result" , result)
 });
 
 geminiWorker.on('failed', (job, err) => {

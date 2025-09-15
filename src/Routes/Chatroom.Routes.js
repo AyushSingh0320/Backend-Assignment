@@ -15,6 +15,6 @@ router.route("/").get(Auth , getchatrooms);
 router.route("/:Id").get(Auth , getchatroomdata);
 
 // Post Message route
-router.route("/:id/messages").post(Auth , modelcheck , postmessage);
+router.route("/:id/messages").post(Auth  , modelcheck , postmessage);
 
 export default router;
